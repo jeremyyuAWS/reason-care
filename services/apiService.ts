@@ -1,12 +1,10 @@
-// API Service Layer - Toggle between Demo Mode and Production APIs
-// Based on REACT_APP_DEMO_MODE environment variable
+// Enhanced API Service Layer with AWS Integration
+// Seamlessly toggle between Demo Mode and AWS Production Mode
+
+import awsService from './awsService';
 
 const DEMO_MODE = process.env.REACT_APP_DEMO_MODE === 'true';
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://api.reasoncare.io';
-
-// Mock data imports for demo mode
-import symptomsData from '../mock/symptoms_input.json';
-import ehrData from '../mock/ehr_data.json';
 
 // Base API configuration
 const apiConfig = {
@@ -18,14 +16,64 @@ const apiConfig = {
   timeout: 10000
 };
 
-// Generic API call wrapper
+// Generic API call wrapper with AWS integration
 async function apiCall(endpoint: string, options: RequestInit = {}): Promise<any> {
   if (DEMO_MODE) {
     // Return mock data based on endpoint
     return handleDemoMode(endpoint, options);
   }
 
+  // Use AWS services for production
+  return handleProductionMode(endpoint, options);
+}
+
+// Production mode with AWS services
+async function handleProductionMode(endpoint: string, options: RequestInit): Promise<any> {
+  const method = options.method || 'GET';
+  
   try {
+    // Route to appropriate AWS service based on endpoint
+    if (endpoint === '/api/intake/voice' && method === 'POST') {
+      const audioData = JSON.parse(options.body as string);
+      return await awsService.voice.processVoiceInput(audioData.audio);
+    }
+
+    if (endpoint.startsWith('/api/ehr/')) {
+      const patientId = endpoint.split('/').pop();
+      if (method === 'GET') {
+        return await awsService.documentDb.getPatientData(patientId!);
+      } else if (method === 'PUT') {
+        const data = JSON.parse(options.body as string);
+        return await awsService.documentDb.savePatientData(patientId!, data);
+      }
+    }
+
+    if (endpoint === '/api/diagnosis/generate' && method === 'POST') {
+      const data = JSON.parse(options.body as string);
+      return await awsService.agents.invokeDiagnosticAgents(data, [
+        'cardiologist_agent',
+        'reasoning_agent', 
+        'pov_summary_agent'
+      ]);
+    }
+
+    if (endpoint === '/api/diagnosis/update' && method === 'PUT') {
+      const data = JSON.parse(options.body as string);
+      // Record the update in DocumentDB
+      await awsService.documentDb.savePatientData(data.patientId, {
+        diagnosis: data,
+        updated_by: 'resident',
+        timestamp: new Date().toISOString()
+      });
+      return { success: true, message: 'Diagnosis updated successfully' };
+    }
+
+    if (endpoint === '/api/guidelines/update' && method === 'POST') {
+      const feedback = JSON.parse(options.body as string);
+      return await awsService.knowledgeBase.queryMedicalGuidelines(feedback.query);
+    }
+
+    // Fallback to standard HTTP for unmapped endpoints
     const response = await fetch(`${apiConfig.baseURL}${endpoint}`, {
       ...options,
       headers: {
@@ -39,13 +87,14 @@ async function apiCall(endpoint: string, options: RequestInit = {}): Promise<any
     }
 
     return await response.json();
+
   } catch (error) {
-    console.error('API Call Error:', error);
+    console.error('Production API Error:', error);
     throw error;
   }
 }
 
-// Demo mode data handler
+// Demo mode data handler (existing functionality)
 async function handleDemoMode(endpoint: string, options: RequestInit): Promise<any> {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
@@ -54,26 +103,30 @@ async function handleDemoMode(endpoint: string, options: RequestInit): Promise<a
   
   // Patient Intake endpoints
   if (endpoint === '/api/intake/voice' && method === 'POST') {
+    const symptomsData = await fetch('/mock/symptoms_input.json');
     return {
       success: true,
-      data: symptomsData,
+      data: await symptomsData.json(),
       message: 'Symptoms processed successfully'
     };
   }
 
   // EHR endpoints
   if (endpoint.startsWith('/api/ehr/') && method === 'GET') {
+    const ehrData = await fetch('/mock/ehr_data.json');
     return {
       success: true,
-      data: ehrData,
+      data: await ehrData.json(),
       message: 'EHR data retrieved successfully'
     };
   }
 
   if (endpoint.startsWith('/api/ehr/') && method === 'PUT') {
+    const ehrData = await fetch('/mock/ehr_data.json');
+    const existingData = await ehrData.json();
     return {
       success: true,
-      data: { ...ehrData, ...JSON.parse(options.body as string) },
+      data: { ...existingData, ...JSON.parse(options.body as string) },
       message: 'EHR data updated successfully'
     };
   }
@@ -167,7 +220,7 @@ async function handleDemoMode(endpoint: string, options: RequestInit): Promise<a
   };
 }
 
-// Exported API service functions
+// Enhanced service exports with AWS integration
 export const intakeService = {
   processVoiceInput: (voiceData: any) => 
     apiCall('/api/intake/voice', {
@@ -179,7 +232,20 @@ export const intakeService = {
     apiCall('/api/intake/text', {
       method: 'POST', 
       body: JSON.stringify(textData)
-    })
+    }),
+
+  // Direct AWS service access for advanced features
+  aws: {
+    startTranscription: (audioData: Blob) => 
+      DEMO_MODE ? 
+        Promise.resolve({ jobName: 'demo-job', status: 'processing' }) :
+        awsService.voice.processVoiceInput(audioData),
+    
+    getTranscriptionResult: (jobName: string) =>
+      DEMO_MODE ?
+        Promise.resolve({ status: 'completed', transcript: 'Mock transcript' }) :
+        awsService.voice.getTranscriptionResult(jobName)
+  }
 };
 
 export const ehrService = {
@@ -190,7 +256,20 @@ export const ehrService = {
     apiCall(`/api/ehr/${patientId}`, {
       method: 'PUT',
       body: JSON.stringify(data)
-    })
+    }),
+
+  // Direct AWS DocumentDB access
+  aws: {
+    saveToDocumentDB: (patientId: string, data: any) =>
+      DEMO_MODE ?
+        Promise.resolve({ success: true }) :
+        awsService.documentDb.savePatientData(patientId, data),
+    
+    getFromDocumentDB: (patientId: string) =>
+      DEMO_MODE ?
+        Promise.resolve({ data: {} }) :
+        awsService.documentDb.getPatientData(patientId)
+  }
 };
 
 export const diagnosisService = {
@@ -216,7 +295,20 @@ export const diagnosisService = {
     apiCall('/api/diagnosis/reject', {
       method: 'POST', 
       body: JSON.stringify({ diagnosisId, reason })
-    })
+    }),
+
+  // Direct AWS Bedrock agent access
+  aws: {
+    invokeMultipleAgents: (patientData: any, agents: string[]) =>
+      DEMO_MODE ?
+        Promise.resolve({ diagnosis: 'Mock diagnosis', confidence: 85 }) :
+        awsService.agents.invokeDiagnosticAgents(patientData, agents),
+    
+    invokeSpecificAgent: (agentName: string, data: any) =>
+      DEMO_MODE ?
+        Promise.resolve({ response: 'Mock agent response', confidence: 80 }) :
+        awsService.agents.invokeSpecificAgent(agentName, data)
+  }
 };
 
 export const guidelinesService = {
@@ -229,15 +321,38 @@ export const guidelinesService = {
   getGuidelines: (version?: string) =>
     apiCall(`/api/guidelines${version ? `?version=${version}` : ''}`, {
       method: 'GET'
-    })
+    }),
+
+  // Direct AWS Knowledge Base access
+  aws: {
+    queryKnowledgeBase: (query: string) =>
+      DEMO_MODE ?
+        Promise.resolve({ guidelines: 'Mock guidelines', sources: [] }) :
+        awsService.knowledgeBase.queryMedicalGuidelines(query)
+  }
 };
 
-// Configuration utilities
+// Configuration utilities with AWS integration
 export const apiUtils = {
   isDemoMode: () => DEMO_MODE,
   getApiBaseUrl: () => API_BASE_URL,
   setAuthToken: (token: string) => {
     apiConfig.headers.Authorization = `Bearer ${token}`;
+  },
+  
+  // AWS-specific utilities
+  aws: {
+    getRegion: () => process.env.REACT_APP_AWS_REGION,
+    getBedrockRegion: () => process.env.REACT_APP_BEDROCK_REGION,
+    isAwsConfigured: () => !!(
+      process.env.REACT_APP_LAMBDA_ORCHESTRATOR_URL &&
+      process.env.REACT_APP_DOCDB_ENDPOINT &&
+      process.env.REACT_APP_S3_BUCKET
+    ),
+    recordMetric: (metricName: string, value: number) =>
+      DEMO_MODE ? 
+        Promise.resolve() :
+        awsService.metrics.putMetric(metricName, value)
   }
 };
 
