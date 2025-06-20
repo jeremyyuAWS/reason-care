@@ -134,7 +134,7 @@ export default function EHRView({ userMode }: EHRViewProps) {
               <h3 className="text-lg font-semibold text-gray-900">AI-Structured Assessment</h3>
               <div className="flex items-center text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
                 <div className="w-2 h-2 bg-blue-500 rounded-full mr-1"></div>
-                Nova Generated
+                ReasonCare Generated
               </div>
             </div>
             
@@ -206,7 +206,7 @@ export default function EHRView({ userMode }: EHRViewProps) {
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
               <h3 className="font-semibold text-gray-900 mb-2 text-sm">Your Privacy</h3>
               <p className="text-xs text-gray-600">
-                Your health information is protected by HIPAA and processed securely by CardioNova AI.
+                Your health information is protected by HIPAA and processed securely by ReasonCare AI.
               </p>
             </div>
           )}

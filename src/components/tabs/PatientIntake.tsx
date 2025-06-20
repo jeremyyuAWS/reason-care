@@ -13,7 +13,7 @@ export default function PatientIntake({ userMode }: PatientIntakeProps) {
   const chatHistory = [
     {
       sender: 'ai',
-      message: "Hello! I'm your CardioNova AI assistant. I'm here to help understand your symptoms. Could you tell me what's been bothering you lately?",
+      message: "Hello! I'm your ReasonCare AI assistant. I'm here to help understand your symptoms. Could you tell me what's been bothering you lately?",
       timestamp: '2:30 PM'
     },
     {
@@ -76,13 +76,13 @@ export default function PatientIntake({ userMode }: PatientIntakeProps) {
                   <MessageSquare className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">CardioNova Assistant</h3>
+                  <h3 className="font-semibold text-gray-900">ReasonCare Assistant</h3>
                   <p className="text-sm text-gray-500">AI-powered symptom intake</p>
                 </div>
                 <div className="ml-auto">
                   <div className="flex items-center text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
                     <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
-                    Nova Active
+                    AI Active
                   </div>
                 </div>
               </div>

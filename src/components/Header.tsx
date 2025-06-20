@@ -18,8 +18,8 @@ export default function Header({ userMode, onModeToggle }: HeaderProps) {
               <Heart className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">CardioNova AI</h1>
-              <p className="text-sm text-gray-500">Diagnostic Assistant Demo</p>
+              <h1 className="text-xl font-bold text-gray-900">ReasonCare</h1>
+              <p className="text-sm text-gray-500">Explainable AI for Confident Medical Decisions</p>
             </div>
           </div>
 
