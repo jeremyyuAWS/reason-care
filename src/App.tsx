@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Heart, User, Stethoscope, ToggleLeft, ToggleRight } from 'lucide-react';
 import Header from './components/Header';
 import TabNavigation from './components/TabNavigation';
@@ -8,6 +8,7 @@ import Diagnosis from './components/tabs/Diagnosis';
 import ResidentReview from './components/tabs/ResidentReview';
 import SeniorReview from './components/tabs/SeniorReview';
 import FeedbackLoop from './components/tabs/FeedbackLoop';
+import WelcomeModal from './components/WelcomeModal';
 
 export type UserMode = 'patient' | 'provider';
 
@@ -19,6 +20,16 @@ export interface AppState {
 function App() {
   const [userMode, setUserMode] = useState<UserMode>('patient');
   const [activeTab, setActiveTab] = useState('intake');
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+
+  // Show welcome modal on first load
+  useEffect(() => {
+    const hasVisited = localStorage.getItem('reasoncare-visited');
+    if (!hasVisited) {
+      setShowWelcomeModal(true);
+      localStorage.setItem('reasoncare-visited', 'true');
+    }
+  }, []);
 
   const tabs = [
     { id: 'intake', label: 'Patient Intake', icon: User, roles: ['patient', 'provider'] },
@@ -78,6 +89,12 @@ function App() {
           {renderActiveTab()}
         </div>
       </div>
+
+      {/* Welcome Modal */}
+      <WelcomeModal 
+        isOpen={showWelcomeModal} 
+        onClose={() => setShowWelcomeModal(false)} 
+      />
     </div>
   );
 }

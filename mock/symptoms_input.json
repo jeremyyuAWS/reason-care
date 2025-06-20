@@ -1,0 +1,79 @@
+{
+  "patientId": "P-2024-0847",
+  "timestamp": "2024-01-15T14:30:00Z",
+  "chiefComplaint": "Chest pain for the past few days",
+  "symptoms": [
+    {
+      "symptom": "chest_pain",
+      "description": "Dull, tight feeling across chest",
+      "onset": "3 days ago",
+      "duration": "Intermittent",
+      "severity": "5/10",
+      "location": "Central chest",
+      "radiation": "Left arm",
+      "triggers": ["physical_activity", "stairs", "exertion"],
+      "relievers": ["rest"],
+      "quality": ["dull", "tight", "pressure"]
+    },
+    {
+      "symptom": "left_arm_discomfort", 
+      "description": "Discomfort spreading to left arm",
+      "onset": "2 days ago",
+      "severity": "3/10",
+      "associated_with": "chest_pain"
+    },
+    {
+      "symptom": "shortness_of_breath",
+      "description": "Mild difficulty breathing",
+      "onset": "1 day ago", 
+      "severity": "2/10",
+      "triggers": ["exertion"],
+      "associated_with": "chest_pain"
+    }
+  ],
+  "conversationHistory": [
+    {
+      "role": "ai",
+      "message": "Hello! I'm your ReasonCare AI assistant. I'm here to help understand your symptoms. Could you tell me what's been bothering you lately?",
+      "timestamp": "14:30:00"
+    },
+    {
+      "role": "patient",
+      "message": "I've been having chest pain for the past few days, especially when I walk up stairs.",
+      "timestamp": "14:31:00"
+    },
+    {
+      "role": "ai", 
+      "message": "I understand you're experiencing chest pain during physical activity. Can you describe the pain? Is it sharp, dull, burning, or crushing?",
+      "timestamp": "14:31:30"
+    },
+    {
+      "role": "patient",
+      "message": "It's more of a dull, tight feeling across my chest. Sometimes it spreads to my left arm.",
+      "timestamp": "14:32:00"
+    },
+    {
+      "role": "ai",
+      "message": "Thank you for that description. How long does the pain typically last when it occurs?",
+      "timestamp": "14:32:30"
+    },
+    {
+      "role": "patient", 
+      "message": "Usually it goes away after I rest for a few minutes.",
+      "timestamp": "14:33:00"
+    }
+  ],
+  "riskFactors": [
+    "hypertension",
+    "diabetes_type_2", 
+    "family_history_cad",
+    "age_over_50"
+  ],
+  "vitalSigns": {
+    "bloodPressure": "142/88",
+    "heartRate": 88,
+    "temperature": 98.6,
+    "respiratoryRate": 16,
+    "oxygenSaturation": 98
+  }
+}
